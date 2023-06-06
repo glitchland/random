@@ -5,6 +5,11 @@
 
 #include "utils.h"
 
+// this function takes a character string, and calculates an integer score
+// based on the frequency of characters in the string
+// the higher the score, the more likely the string is to be english
+// this is a very simple metric, and can be improved upon
+
 
 // take a byte array and return a string of hex characters
 char * byte_array_to_hex_str(struct byte_array *ba) {

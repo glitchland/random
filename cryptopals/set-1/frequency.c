@@ -204,5 +204,9 @@ double score_bigram(char* s) {
     }
 
     free(uppercase_s);
+    uppercase_s = NULL;
+    free_bigram_array(&bigrams);
+    free_bigram_table(bigram_table);
+    
     return score;
 }

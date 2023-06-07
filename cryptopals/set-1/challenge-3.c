@@ -4,7 +4,6 @@
 #include "utils.h"
 #include "frequency.h"
 
-// a struct containing a double score and a byte key
 struct key_score {
     double monogram_score;
     double bigram_score;
@@ -12,14 +11,12 @@ struct key_score {
     char *unencrypted_bytes;
 };
 
-// a table containing a user specified number of score_key structs
 struct key_score_table {
     size_t size;
     struct key_score* entries[];
 };
 
-// return a score_key table with one score_key entry per possible byte value
-// and a double score of 0.0
+
 struct key_score_table* new_key_score_table(size_t size) {
     struct key_score_table* result = malloc(sizeof(struct key_score_table) + size * sizeof(struct key_score*));
     result->size = size;
@@ -32,7 +29,6 @@ struct key_score_table* new_key_score_table(size_t size) {
     return result;
 }
 
-// free a score_key table
 void free_score_key_table(struct key_score_table* table) {
     for (int i = 0; i < table->size; i++) {
         free(table->entries[i]->unencrypted_bytes);
@@ -43,8 +39,6 @@ void free_score_key_table(struct key_score_table* table) {
     table = NULL;
 }
 
-// given a hex string and a byte key, xor the string with the key and return
-// the result as a byte array
 struct byte_array* xor_hex_str_with_byte_key(char* hex_str, unsigned char key) {
     struct byte_array* result = hex_str_to_byte_array(hex_str);
     for (int i = 0; i < result->size; i++) {
@@ -71,8 +65,7 @@ void main() {
         xored = NULL;
     }
 
-    // for each entry in the score key table, print the score, key, and the 
-    // unencrypted string
+    // find the top score and print it
     double top_score = 0.0;
     int top_score_index = 0;
     for (int i = 0; i < table->size; i++) {

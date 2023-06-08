@@ -5,7 +5,6 @@
 
 #include "utils.h"
 
-
 char * byte_array_to_hex_str(struct byte_array *ba) {
     char *hex = calloc((ba->size * 2) + 1, sizeof(char));
 
@@ -56,13 +55,12 @@ bool is_hex_char(char c) {
     );
 }
 
-
 struct byte_array * new_byte_array(size_t size) {
 
     // allocate the struct and the bytes
     struct byte_array *array = malloc(
         sizeof(struct byte_array) + 
-        (size * sizeof(unsigned char)) + 1
+        ((size + 1) * sizeof(unsigned char))
     );
     
     if (array == NULL) {
@@ -144,6 +142,9 @@ char * byte_array_to_str(struct byte_array *bytes) {
     for (int i = 0; i < bytes->size; i++) {
         str[i] = bytes->bytes[i];
     }
+
+    // null terminate the string
+    str[bytes->size] = '\0';
 
     return str;
 }

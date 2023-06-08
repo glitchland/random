@@ -70,7 +70,6 @@ void main() {
     // for each line in the file
     struct key_score_table* best_scores = new_key_score_table(data->count);
 
-
     // brute force the key, and select the best candidate
     for (int i = 0; i < data->count; i++) {
         // remove the empty allocated key_score structs, as they are not needed

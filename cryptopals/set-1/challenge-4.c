@@ -55,7 +55,6 @@ void print_file_lines(struct file_lines* lines) {
     printf("\n");
 }
 
-
 void main() {
     // open a file for reading
     FILE* file = fopen(RESOURCE_FILE, "r");

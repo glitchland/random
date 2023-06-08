@@ -70,8 +70,13 @@ void main() {
     // for each line in the file
     struct key_score_table* best_scores = new_key_score_table(data->count);
 
+
     // brute force the key, and select the best candidate
     for (int i = 0; i < data->count; i++) {
+        // remove the empty allocated key_score structs, as they are not needed
+        free(best_scores->entries[i]);
+
+        // allocate a new key_score struct for this line
         struct key_score* ks = select_best_xor_key_score(data->lines[i]);
         best_scores->entries[i] = ks;
     }

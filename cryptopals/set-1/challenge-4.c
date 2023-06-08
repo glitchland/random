@@ -83,7 +83,6 @@ void main() {
 
     print_key_score(best_line);
 
-
     free_score_key_table(best_scores);
     free_key_score(best_line);
     free_file_lines(data);

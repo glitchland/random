@@ -3,19 +3,19 @@ SUB_TARGETS := c1 c2 c3 c4 c5
 all: $(SUB_TARGETS)
 
 c1:
-	gcc -g3 -o c1 xor.c utils.c frequency.c challenge-1.c
+	gcc -g3 -o c1 base64.c xor.c utils.c frequency.c challenge-1.c
 
 c2:
-	gcc -g3 -o c2 xor.c utils.c frequency.c challenge-2.c
+	gcc -g3 -o c2 base64.c xor.c utils.c frequency.c challenge-2.c
 
 c3:
-	gcc -g3 -o c3 xor.c utils.c frequency.c challenge-3.c
+	gcc -g3 -o c3 base64.c xor.c utils.c frequency.c challenge-3.c
 
 c4:
-	gcc -g3 -o c4 xor.c utils.c frequency.c challenge-4.c
+	gcc -g3 -o c4 base64.c xor.c utils.c frequency.c challenge-4.c
 
 c5:
-	gcc -g3 -o c5 xor.c utils.c frequency.c challenge-5.c
+	gcc -g3 -o c5 base64.c xor.c utils.c frequency.c challenge-5.c
 
 clean:
 	rm -f c1

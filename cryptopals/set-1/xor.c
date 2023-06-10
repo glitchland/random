@@ -122,6 +122,19 @@ struct key_score* select_best_xor_key_score(char* hex_str) {
     return result;
 }
 
+// this function takes a plaintext and a key and xors the plaintext with the key
+// the key is repeated as necessary to xor the entire plaintext
+void xor_with_repeating_key(struct byte_array* plaintext, struct byte_array* key) {
+    if (plaintext->bytes == NULL || key->bytes == NULL) {
+        printf("Error: plaintext and key must not be NULL\n");
+        return;
+    }
+
+    for (int i = 0; i < plaintext->size; i++) {
+        plaintext->bytes[i] = plaintext->bytes[i] ^ key->bytes[i % key->size];
+    }
+}
+
 // this function prints out a key score 
 void print_key_score(struct key_score* key_score) {
     if (key_score == NULL) {

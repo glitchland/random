@@ -131,6 +131,16 @@ struct byte_array * hex_str_to_byte_array(char *hex) {
     return array;
 }
 
+struct byte_array* str_to_byte_array(char *str) {
+    struct byte_array *array = new_byte_array(strlen(str));
+
+    for (int i = 0; i < strlen(str); i++) {
+        array->bytes[i] = str[i];
+    }
+
+    return array;
+}
+
 char * byte_array_to_str(struct byte_array *bytes) {
     char *str = calloc(bytes->size + 1, sizeof(char));
 

@@ -10,8 +10,8 @@ void main() {
                        "I go crazy when I hear a cymbal";
     char *key = "ICE";
 
-    struct byte_array* clear_text_bytes = str_to_byte_array(clear_text);
-    struct byte_array* key_bytes = str_to_byte_array(key);
+    struct byte_array* clear_text_bytes = byte_array_from_str(clear_text);
+    struct byte_array* key_bytes = byte_array_from_str(key);
 
     // this function modifies the clear_text_bytes array in place
     xor_with_repeating_key(clear_text_bytes, key_bytes);

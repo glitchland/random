@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "slice.h"
 #include "utils.h"
 
 #define MAX_INPUT_HEX_LEN 256
@@ -45,18 +46,18 @@ void main(int argc, char * argv[]) {
         return;
     }
 
-    struct byte_array *input1 = hex_str_to_byte_array(argv[1]);
-    struct byte_array *input2 = hex_str_to_byte_array(argv[2]);
-    struct byte_array *output = xor_byte_arrays(input1, input2);
+    slice *input1 = hex_string_to_byte_slice(argv[1]);
+    slice *input2 = hex_string_to_byte_slice(argv[2]);
+    slice *output = xor_byte_slices(input1, input2);
 
-    
-    char *output_hex = byte_array_to_hex_str(output);
+    char *output_hex = byte_slice_to_hex_string(output);
 
     printf("%s\n", output_hex);
     
-    free_byte_array(input1);
-    free_byte_array(input2);
-    free_byte_array(output);
+    free_slice(input1);
+    free_slice(input2);
+    free_slice(output);
     free(output_hex);
+    output_hex = NULL;
 }
 

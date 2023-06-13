@@ -1,5 +1,5 @@
 SUB_TARGETS := c1 c2 c3 c4 c5 c6
-SRCS := base64.c frequency.c hamming.c utils.c xor.c 
+SRCS := base64.c frequency.c hamming.c slice.c utils.c xor.c 
 VALGRIND := valgrind --leak-check=full --track-origins=yes --show-leak-kinds=all
 
 all: $(SUB_TARGETS)
@@ -39,3 +39,6 @@ vg-c4:
 
 vg-c5:
 	$(VALGRIND) ./c5
+
+vg-c6:
+	$(VALGRIND) ./c6

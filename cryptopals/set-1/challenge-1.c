@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "base64.h"
+#include "slice.h"
 #include "utils.h"
 
 // This is a solution for cryptopals set 1 challenge 1. Bade64 encoding.
@@ -12,7 +13,7 @@ void main () {
     char *answer = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t";
     
     // convert the hex string to an array of unsigned bytes
-    struct byte_array *bytes = hex_str_to_byte_array(hex);
+    slice *bytes = hex_string_to_byte_slice(hex);
 
     // base 64 encode the byte array
     char *b64 = hex_to_base64(bytes);
@@ -29,7 +30,7 @@ void main () {
     }
 
     // free the memory
-    free_byte_array(bytes);
+    free_slice(bytes);
     free(b64);
     b64 = NULL;
 

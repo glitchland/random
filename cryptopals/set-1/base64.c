@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "slice.h"
 #include "utils.h"
 
 static const char b64_table[64] = {
@@ -18,7 +19,7 @@ char base64_lookup(unsigned char v) {
 }
 
 // make groups from byte array
-struct byte_groups * group_bytes(struct byte_array *input) {
+struct byte_groups * group_bytes(slice *input) {
     int numGroups = input->size / 3;
 
     struct byte_groups *groups = new_byte_groups(numGroups);
@@ -27,7 +28,7 @@ struct byte_groups * group_bytes(struct byte_array *input) {
         unsigned char *group = calloc(3, sizeof(unsigned char));
 
         for (int j = 0; j < 3; j++) {
-            group[j] = input->bytes[(i * 3) + j];
+            group[j] = get_byte_at(input, (i * 3) + j);
         }
 
         groups->groups[i] = group;
@@ -38,12 +39,12 @@ struct byte_groups * group_bytes(struct byte_array *input) {
 
 
 // given a byte array, pretty print the bytes
-void debug_print_bytes(struct byte_array * array) {
-    int len = array->size;
+void debug_print_bytes(slice * s) {
+    int len = s->size;
 
     printf("Length: %d\n", len);
     for (int i = 0; i < len; i++) {
-        printf("%02x ", array->bytes[i]);
+        printf("%02x ",get_byte_at(s, i));
     }
 
     printf("\n");
@@ -63,9 +64,9 @@ void debug_print_groups(struct byte_groups *groups) {
 }
 
 // caller must free the returned byte array
-struct byte_array * groups_to_b64_indexes(struct byte_groups *groups) {
+slice * groups_to_b64_indexes(struct byte_groups *groups) {
     int numGroups = groups->size;
-    struct byte_array *array = new_byte_array(numGroups * 4);
+    slice *s = new_byte_slice(numGroups * 4);
 
     for (int i = 0; i < numGroups; i++) {
         unsigned char *group = groups->groups[i];
@@ -86,39 +87,39 @@ struct byte_array * groups_to_b64_indexes(struct byte_groups *groups) {
 
         // convert the 8 bit numbers to decimal
         for (int j = 0; j < 4; j++) {
-            array->bytes[(i * 4) + j] = nums[j];
+            set_byte_at(s, (i * 4) + j, nums[j]);
         }
     }
 
-    return array;
+    return s;
 }
 
 // caller must free the returned byte array
-struct byte_array * indexes_to_base64_array(struct byte_array *indexes) {
-    struct byte_array *b64_chars = new_byte_array(indexes->size);
-
+slice * indexes_to_base64_array(slice *indexes) {
+    slice *b64_chars = new_byte_slice(indexes->size);
+    
     for (int i = 0; i < indexes->size; i++) {
-        b64_chars->bytes[i] = base64_lookup(indexes->bytes[i]);
+        set_byte_at(b64_chars, i, base64_lookup(get_byte_at(indexes, i)));
     }
 
     return b64_chars;
 }
 
 // take a byte_array as an argument and return a string 
-char * base64_array_to_str(struct byte_array *bytes) {
-    return byte_array_to_str(bytes);
+char * base64_array_to_str(slice *bytes) {
+    return byte_slice_to_string(bytes);
 }
 
 // https://base64.guru/learn/base64-algorithm/encode
-char * hex_to_base64(struct byte_array *bytes) {
+char * hex_to_base64(slice *bytes) {
     struct byte_groups *groups = group_bytes(bytes);
-    struct byte_array *b64_indexes = groups_to_b64_indexes(groups);
-    struct byte_array *b64_chars = indexes_to_base64_array(b64_indexes);
+    slice *b64_indexes = groups_to_b64_indexes(groups);
+    slice *b64_chars = indexes_to_base64_array(b64_indexes);
     char *b64_str = base64_array_to_str(b64_chars);
 
     free_byte_groups(groups);
-    free_byte_array(b64_indexes);
-    free_byte_array(b64_chars);
+    free_slice(b64_indexes);
+    free_slice(b64_chars);
 
     return b64_str;
 }

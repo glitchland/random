@@ -31,7 +31,7 @@ void free_slice(slice *s) {
 }
 
 void* get_element_at(slice *s, size_t index) {
-    if (index >= s->used) {
+    if (index < 0 || index >= s->size) {
         return NULL;  // Out of bounds
     }
     return (char *)s->array + index * s->element_size;
@@ -78,7 +78,8 @@ unsigned char get_byte_at(slice *s, size_t index) {
 }
 
 void set_byte_at(slice* s, size_t index, unsigned char new_element) {
-    if (index >= s->used) {
+    if (index >= s->size || index < 0) {
+        debug_print_byte_slice(s);
         fprintf(stderr, "Index out of bounds\n");
         exit(EXIT_FAILURE);
     }
@@ -87,7 +88,7 @@ void set_byte_at(slice* s, size_t index, unsigned char new_element) {
     array[index] = new_element;
 }
 
-slice* byte_slice_from_str(char *str) {
+slice* byte_slice_from_string(char *str) {
     size_t str_length = strlen(str);
     slice* byte_slice = calloc(1, sizeof(slice));
     if (byte_slice == NULL) {
@@ -164,6 +165,7 @@ slice* hex_string_to_byte_slice(const char* hex_str) {
         }
         append_to_byte_slice(byte_slice, (unsigned char)byte);
     }
+
     return byte_slice;
 }
 
@@ -202,4 +204,17 @@ slice* xor_byte_slices(slice* s1, slice* s2) {
     }
 
     return result;
+}
+
+void debug_print_byte_slice(slice* s) {
+    printf("slice: %p\n", s);
+    printf("array: %p\n", s->array);
+    printf("used: %zu\n", s->used);
+    printf("size: %zu\n", s->size);
+    printf("element_size: %zu\n", s->element_size);
+    printf("contents: ");
+    for (size_t i = 0; i < s->used; i++) {
+        printf("%02x ", get_byte_at(s, i));
+    }
+    printf("\n");
 }

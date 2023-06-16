@@ -2,6 +2,7 @@
 // and plaintext length.
 #include <string.h>
 
+#include "slice.h"
 #include "utils.h"
 #include "xor.h"
 
@@ -10,8 +11,8 @@ void main() {
                        "I go crazy when I hear a cymbal";
     char *key = "ICE";
 
-    struct byte_array* clear_text_bytes = byte_array_from_str(clear_text);
-    struct byte_array* key_bytes = byte_array_from_str(key);
+    slice* clear_text_bytes = byte_slice_from_string(clear_text);
+    slice* key_bytes = byte_slice_from_string(key);
 
     // this function modifies the clear_text_bytes array in place
     xor_with_repeating_key(clear_text_bytes, key_bytes);
@@ -21,7 +22,7 @@ void main() {
                      "2a3124333a653e2b2027630c692b20283165286326302e27"
                      "282f";
     
-    char *actual = byte_array_to_hex_str(clear_text_bytes);
+    char *actual = byte_slice_to_hex_string(clear_text_bytes);
 
     if (strcmp(expected, actual) == 0) {
         printf("Success!\n");
@@ -33,6 +34,6 @@ void main() {
 
     free(actual);
     actual = NULL;
-    free_byte_array(clear_text_bytes);
-    free_byte_array(key_bytes);
+    free_slice(clear_text_bytes);
+    free_slice(key_bytes);
 }

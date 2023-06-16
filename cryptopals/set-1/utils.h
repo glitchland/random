@@ -24,6 +24,8 @@ char * byte_array_to_str(struct byte_array *bytes);
 struct byte_array * xor_byte_arrays(struct byte_array *ba1, struct byte_array *ba2);
 char * byte_array_to_hex_str(struct byte_array *ba);
 struct byte_array* byte_array_from_str(char *str);
+struct byte_array * byte_array_slice(struct byte_array *array, int start, int end);
+struct byte_array *file_to_byte_array(char *filename);
 
 bool is_valid_hex_string(char *hex_str);
 bool is_hex_char(char c);

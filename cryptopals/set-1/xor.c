@@ -3,13 +3,16 @@
 #include <string.h>
 
 #include "frequency.h"
+#include "slice.h"
 #include "utils.h"
 #include "xor.h"
 
-struct byte_array* xor_hex_str_with_byte_key(char* hex_str, unsigned char key) {
-    struct byte_array* result = hex_str_to_byte_array(hex_str);
+
+slice* xor_hex_str_with_byte_key(char* hex_str, unsigned char key) {
+    slice *result = hex_string_to_byte_slice(hex_str);
+
     for (int i = 0; i < result->size; i++) {
-        result->bytes[i] = result->bytes[i] ^ key;
+        set_byte_at(result, i, get_byte_at(result, i) ^ key);
     }
     return result;
 }
@@ -98,9 +101,10 @@ struct key_score* select_best_xor_key_score(char* hex_str) {
 
     // calculate the monogram and bigram scores for each possible key
     for (int i = 0; i < 256; i++) {
-        struct byte_array* xored = xor_hex_str_with_byte_key(hex_str, i);
-        char* xored_str = byte_array_to_str(xored);
-        free_byte_array(xored);
+        slice *xored = xor_hex_str_with_byte_key(hex_str, i);
+        char* xored_str = byte_slice_to_string(xored);
+
+        free_slice(xored);
         xored = NULL;
 
         table->entries[i]->key = i;
@@ -124,14 +128,14 @@ struct key_score* select_best_xor_key_score(char* hex_str) {
 
 // this function takes a plaintext and a key and xors the plaintext with the key
 // the key is repeated as necessary to xor the entire plaintext
-void xor_with_repeating_key(struct byte_array* plaintext, struct byte_array* key) {
-    if (plaintext->bytes == NULL || key->bytes == NULL) {
+void xor_with_repeating_key(slice* plaintext, slice* key) {
+    if (plaintext->array == NULL || key->array == NULL) {
         printf("Error: plaintext and key must not be NULL\n");
         return;
     }
 
-    for (int i = 0; i < plaintext->size; i++) {
-        plaintext->bytes[i] = plaintext->bytes[i] ^ key->bytes[i % key->size];
+    for (int i = 0; i < plaintext->used; i++) {
+        set_byte_at(plaintext, i, get_byte_at(plaintext, i) ^ get_byte_at(key, i % slice_len(key)));
     }
 }
 

@@ -5,12 +5,12 @@
 
 #include "slice.h"
 
-slice new_slice(size_t initial_size, size_t element_size) {
-    slice s;
-    s.array = calloc(initial_size, element_size);
-    s.used = 0;
-    s.size = initial_size;
-    s.element_size = element_size;
+slice* new_slice(size_t initial_size, size_t element_size) {
+    slice* s = calloc(1, sizeof(slice));
+    s->array = calloc(initial_size, element_size);
+    s->used = 0;
+    s->size = initial_size;
+    s->element_size = element_size;
     return s;
 }
 
@@ -28,6 +28,8 @@ void free_slice(slice *s) {
     s->array = NULL;
     s->used = s->size = 0;
     s->element_size = 0;
+    free(s);
+    s = NULL;
 }
 
 void* get_element_at(slice *s, size_t index) {
@@ -54,14 +56,7 @@ size_t slice_len(slice* s) {
 //////////////////////////////////////////////
 // byte slices
 slice* new_byte_slice(size_t initialSize) {
-    slice* byte_slice = calloc(1, sizeof(slice));
-    if (byte_slice == NULL) {
-        fprintf(stderr, "Failed to allocate memory\n");
-        exit(EXIT_FAILURE);
-    }
-    
-    *byte_slice = new_slice(initialSize, sizeof(unsigned char));
-    return byte_slice;
+    return new_slice(initialSize, sizeof(unsigned char));
 }
 
 void append_to_byte_slice(slice *s, unsigned char element) {
@@ -150,13 +145,7 @@ slice* hex_string_to_byte_slice(const char* hex_str) {
         exit(EXIT_FAILURE);
     }
 
-    slice* byte_slice = calloc(1, sizeof(slice));
-    if (byte_slice == NULL) {
-        fprintf(stderr, "Failed to allocate memory\n");
-        exit(EXIT_FAILURE);
-    }
-
-    byte_slice = new_byte_slice(len / 2);
+    slice* byte_slice = new_byte_slice(len / 2);
     for (size_t i = 0; i < len; i += 2) {
         unsigned int byte;
         if (sscanf(hex_str + i, "%2x", &byte) != 1) {
